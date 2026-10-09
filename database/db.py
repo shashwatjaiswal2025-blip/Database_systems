@@ -199,3 +199,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
+async def get_db():
+    async with SessionLocal() as session:
+        yield session
+
