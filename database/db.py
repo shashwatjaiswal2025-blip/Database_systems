@@ -159,7 +159,7 @@ class Ticket(Base):
     due_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     ticket_status: Mapped[str] = mapped_column(String(30), nullable=False)
     violation_id: Mapped[int] = mapped_column(
-        ForeignKey("violations.violation_id"), unique=True, nullable=False
+        ForeignKey("violations.violation_id"), unique=True, nullable=False  
     )
 
     violation: Mapped["Violation"] = relationship(back_populates="ticket")

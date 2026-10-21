@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional,Literal
 
 class UserBase(BaseModel):
     phone: str
@@ -14,8 +14,9 @@ class vehicleBase(BaseModel):
     make: str
     model: str
     color: str
-    registration_status: str
+    registration_status: Literal["active", "pending", "expired"] = "pending" # to be changed with better options if ideas come
     owner_id: int
+ 
 
 class cameraBase(BaseModel):
     camera_id: str
@@ -33,3 +34,5 @@ class ParkingSlotBase(BaseModel):
     status: str
     zone_id: int
 
+class Violations(BaseModel):
+    plate_no: str
