@@ -7,7 +7,7 @@ from schemas import UserBase, vehicleBase, cameraBase, ParkingZoneBase, ParkingS
 from database.db import get_session, engine, Base, User, Vehicle, Camera, ParkingZone, ParkingSlot
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter(prefix = "", tags=["new"])
+router = APIRouter(prefix = "/test temp", tags=["new"])
 
 
 
