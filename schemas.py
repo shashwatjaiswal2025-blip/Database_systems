@@ -36,3 +36,15 @@ class ParkingSlotBase(BaseModel):
 
 class Violations(BaseModel):
     plate_no: str
+
+class parking(BaseModel):
+    zone_id: int
+    total_capacity: int
+    location_name: str
+    base_rate_per_hour: float
+
+
+class telemetry(BaseModel):
+    zone_id:int
+    slot_id:int
+    status:bool # 1 for ocuupied 0 for empty

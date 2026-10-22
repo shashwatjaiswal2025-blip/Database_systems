@@ -100,7 +100,7 @@ class ParkingSlot(Base):
     slot_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     sensor_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     status: Mapped[str] = mapped_column(String(30), nullable=False)
-    zone_id: Mapped[int] = mapped_column(ForeignKey("parking_zones.zone_id"), nullable=False)
+    zone_id: Mapped[int] = mapped_column(ForeignKey("parking_zones.zone_id"), nullable=False,primary_key=True)
 
     zone: Mapped["ParkingZone"] = relationship(back_populates="slots")
     reservations: Mapped[List["Reservation"]] = relationship(back_populates="slot")
