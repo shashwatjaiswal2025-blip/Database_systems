@@ -114,11 +114,11 @@ class Reservation(Base):
     end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     total_cost: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"), nullable=False)
-    plate_no: Mapped[str] = mapped_column(ForeignKey("vehicles.plate_no"), nullable=False)
     slot_id: Mapped[int] = mapped_column(ForeignKey("parking_slots.slot_id"), nullable=False)
+    zone_id: Mapped[int] = mapped_column(ForeignKey("parking_zones.zone_id"), nullable=False)
 
+    zone: Mapped["ParkingZone"] = relationship(back_populates="reservations")
     user: Mapped["User"] = relationship(back_populates="reservations")
-    vehicle: Mapped["Vehicle"] = relationship(back_populates="reservations")
     slot: Mapped["ParkingSlot"] = relationship(back_populates="reservations")
 
 

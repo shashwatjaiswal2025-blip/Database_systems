@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, De
 import asyncio
 from dataclasses import dataclass, field
 from sqlalchemy import select
-from schemas import UserBase, vehicleBase,Violations,telemetry
-from database.db import get_session, ParkingSlot,ParkingZone
+from schemas import UserBase, vehicleBase,Violations,telemetry, reservation_resquest
+from database.db import get_session, ParkingSlot,ParkingZone,Reservation
 from sqlalchemy.ext.asyncio import AsyncSession
 
 """
@@ -61,6 +61,8 @@ router = APIRouter()
 @router.patch("/parking/slots/telemetry", status_code=status.HTTP_200_OK)
 async def update_slot_telemetry(slot_details: telemetry, session: AsyncSession = Depends(get_session)):
 
+
+
     stmt = select(ParkingSlot).where(
         ParkingSlot.zone_id == slot_details.zone_id,
         ParkingSlot.slot_id == slot_details.slot_id,
@@ -87,3 +89,101 @@ async def update_slot_telemetry(slot_details: telemetry, session: AsyncSession =
         "zone_id": slot.zone_id,
         "status": slot.status,
     }
+
+@router.post("/reservations")
+async def reserve_slot(reservation_details: reservation_resquest, session: AsyncSession = Depends(get_session)):
+
+    if reservation_details.start_time >= reservation_details.end_time:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Start time must be before end time",
+        )
+
+
+    stmt = select(ParkingSlot).where(
+        ParkingSlot.zone_id == reservation_details.zone_id,
+        ParkingSlot.slot_id == reservation_details.slot_id,
+    )
+
+    result = await session.execute(stmt)
+    slot = result.scalars().first()
+
+    if not slot:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Slot {reservation_details.slot_id} in zone {reservation_details.zone_id} not found",
+        )
+
+    stmt = select(ParkingZone).where(ParkingZone.zone_id == reservation_details.zone_id)
+    result_zone = await session.execute(stmt)
+    zone = result_zone.scalars().first()
+
+    stmt_res = select(Reservation).where(
+            Reservation.zone_id == reservation_details.zone_id,
+            Reservation.slot_id == reservation_details.slot_id,
+            Reservation.start_time < reservation_details.end_time,
+            Reservation.end_time > reservation_details.start_time
+        )
+
+    result_res = await session.execute(stmt_res)
+    existing_reservation = result_res.scalars().first()
+
+    if existing_reservation :
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Slot {reservation_details.slot_id} in zone {reservation_details.zone_id} is already reserved",
+        )
+
+    
+
+
+    duration = reservation_details.end_time-reservation_details.start_time
+    duration_hr= float(duration.total_seconds()/3600)
+
+    cost =round(duration_hr * float(zone.base_rate_per_hour), 2)
+
+    new_reservation = Reservation(
+    **reservation_details.model_dump(),
+    total_cost=cost
+    )
+
+    session.add(new_reservation)
+    await session.commit()
+    await session.refresh(new_reservation)
+
+    return new_reservation
+
+@router.get("/reservations/{res_id}")
+async def get_reservation(res_id: int, session: AsyncSession = Depends(get_session)):
+    stmt = select(Reservation).where(Reservation.res_id == res_id)
+    result = await session.execute(stmt)
+    reservation = result.scalars().first()
+
+    if not reservation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Reservation {res_id} not found",
+        )
+
+    return reservation
+
+@router.post("/reservations/{res_id}/cancel")
+async def cancel_reservation(res_id: int, session: AsyncSession = Depends(get_session)):
+    stmt = select(Reservation).where(Reservation.res_id == res_id)
+    result = await session.execute(stmt)
+    reservation = result.scalars().first()
+    if not reservation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Reservation {res_id} not found",
+            )
+    session.delete(reservation)
+    await session.commit()
+    return {"message": f"Reservation {res_id} cancelled successfully"}
+
+@router.get("/users/{user_id}/reservations")
+async def get_user_reservations(user_id: int, session: AsyncSession = Depends(get_session)):
+    stmt = select(Reservation).where(Reservation.user_id == user_id)
+    result = await session.execute(stmt)
+    reservations = result.scalars().all()
+    return reservations

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 from typing import Optional,Literal
 
@@ -48,3 +50,19 @@ class telemetry(BaseModel):
     zone_id:int
     slot_id:int
     status:bool # 1 for ocuupied 0 for empty
+
+class reservation_resquest(BaseModel):
+    user_id:int
+    zone_id:int
+    slot_id:int
+    start_time:datetime
+    end_time:datetime
+
+class reservation_base_submit(BaseModel):
+    res_id:int
+    user_id:int
+    zone_id:int
+    slot_id:int
+    start_time:datetime
+    end_time:datetime
+    total_cost:float
