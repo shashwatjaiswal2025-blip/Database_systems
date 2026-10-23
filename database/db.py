@@ -141,7 +141,7 @@ class Violation(Base):
     violation_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     image_link: Mapped[Optional[str]] = mapped_column(String(500))
     plate_no: Mapped[str] = mapped_column(ForeignKey("vehicles.plate_no"), nullable=False)
-    camera_id: Mapped[int] = mapped_column(ForeignKey("cameras.camera_id"), nullable=False)
+    reporter_id: Mapped[int] = mapped_column(ForeignKey("cameras.camera_id"), nullable=False)
 
     vehicle: Mapped["Vehicle"] = relationship(back_populates="violations")
     camera: Mapped["Camera"] = relationship(back_populates="violations")
@@ -158,6 +158,7 @@ class Ticket(Base):
     issue_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     due_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     ticket_status: Mapped[str] = mapped_column(String(30), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"), nullable=False)
     violation_id: Mapped[int] = mapped_column(
         ForeignKey("violations.violation_id"), unique=True, nullable=False  
     )

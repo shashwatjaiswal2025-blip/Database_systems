@@ -66,3 +66,37 @@ class reservation_base_submit(BaseModel):
     start_time:datetime
     end_time:datetime
     total_cost:float
+
+class new_camera(BaseModel):
+    location_name:str
+    status:Literal["ONLINE","OFFLINE","MAINTENANCE"]
+    ip_address:str
+
+class camerabase(new_camera):
+    camera_id:str
+
+class violation_request(BaseModel):
+    rule_broken:Literal["speeding","red_light_violation","illegal_parking","other"]
+    img_link:str
+    vehicle_plate:str
+    reporter_id:int
+    fine_amount:float | None = None
+
+class violation_base(violation_request):
+    violation_id:int
+    violation_time:datetime
+
+class ticket_app(BaseModel):
+    violation_id:int
+    user_id:int
+    fine_amount:float
+    status:Literal["paid","unpaid"]
+
+class ticket_base(ticket_app):
+    ticket_id:int
+    issue_date:datetime
+    due_date:datetime
+
+class appeal_request(BaseModel):
+    ticket_id:int
+    reason:str
