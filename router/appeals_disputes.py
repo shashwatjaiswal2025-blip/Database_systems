@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, De
 import asyncio
 from dataclasses import dataclass, field
 from sqlalchemy import select
-from schemas import UserBase, appeal_request, vehicleBase,Violations,telemetry, reservation_resquest
-from database.db import get_session, ParkingSlot,ParkingZone,Reservation
+from schemas import UserBase, appeal_request, appeal_base
+from database.db import get_db as get_session, ParkingSlot,ParkingZone,Reservation
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.db import Ticket, Appeal
 from typing import Literal
@@ -45,14 +45,14 @@ async def submit_appeal(ticket_id: int, appeal: appeal_request, Session: AsyncSe
     await Session.refresh(new_appeal)
     return {"message": "Appeal submitted successfully", "appeal": new_appeal}
 
-@router.get("/appeals", response_model=list[Appeal])
+@router.get("/appeals", response_model=list[appeal_base])
 async def list_appeals(Session: AsyncSession = Depends(get_session)):
     stmt = select(Appeal)
     result = await Session.execute(stmt)
     appeals = result.scalars().all()
     return appeals
 
-@router.get("/appeals/{appeals_id}", response_model=Appeal)
+@router.get("/appeals/{appeals_id}", response_model=appeal_base)
 async def get_appeal(appeals_id: int, Session: AsyncSession = Depends(get_session)):
     stmt = select(Appeal).where(Appeal.appeals_id == appeals_id)
     result = await Session.execute(stmt)

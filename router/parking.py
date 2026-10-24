@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, De
 import asyncio
 from dataclasses import dataclass, field
 from sqlalchemy import select
-from schemas import UserBase, vehicleBase,Violations,telemetry, reservation_resquest
-from database.db import get_session, ParkingSlot,ParkingZone,Reservation
+from schemas import telemetry, reservation_resquest,ParkingZoneBase,ParkingSlotBase,parking
+from database.db import get_db as get_session, ParkingSlot,ParkingZone,Reservation
 from sqlalchemy.ext.asyncio import AsyncSession
 
 """
@@ -29,7 +29,7 @@ GET		/users/{user_id}/reservations	View user's past and upcoming reservations
 
 router = APIRouter(prefix = "", tags=["Parking Management"])
 
-@router.get("/parking/zones", responce_model=list[ParkingZone])
+@router.get("/parking/zones", response_model=list[parking])
 async def list_parking_zones(Session: AsyncSession = Depends(get_session)):
     stmt = select(ParkingZone)
     result = await Session.execute(stmt)
@@ -37,26 +37,19 @@ async def list_parking_zones(Session: AsyncSession = Depends(get_session)):
     return zones
 
 @router.post("/parking/zones")
-async def new_parking_zone(zone: ParkingZone, Session: AsyncSession = Depends(get_session)):
+async def new_parking_zone(zone: ParkingZoneBase, Session: AsyncSession = Depends(get_session)):
     new_zone = ParkingZone(**zone.model_dump())
     Session.add(new_zone)
     await Session.commit()
     await Session.refresh(new_zone)
     return new_zone
 
-@router.get("/parking/zones/{zone_id}/available-slots",response_model=list[ParkingSlot])
+@router.get("/parking/zones/{zone_id}/available-slots",response_model=list[ParkingSlotBase])
 async def available_slots(zone_id: int, Session: AsyncSession = Depends(get_session)):
     stmt = select(ParkingSlot).where(ParkingSlot.zone_id == zone_id, ParkingSlot.status == "VACANT")
     result = await Session.execute(stmt)
     slots = result.scalars().all()
     return slots
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-router = APIRouter()
-
 
 @router.patch("/parking/slots/telemetry", status_code=status.HTTP_200_OK)
 async def update_slot_telemetry(slot_details: telemetry, session: AsyncSession = Depends(get_session)):

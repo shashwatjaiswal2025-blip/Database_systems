@@ -3,7 +3,7 @@ import asyncio
 from dataclasses import dataclass, field
 from sqlalchemy import select
 from schemas import Violations, camerabase, new_camera, violation_request, violation_base, ticket_base
-from database.db import Ticket, Vehicle, get_session, ParkingSlot,ParkingZone,Reservation
+from database.db import Ticket, Vehicle, get_db as get_session, ParkingSlot,ParkingZone,Reservation
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import timedelta
 

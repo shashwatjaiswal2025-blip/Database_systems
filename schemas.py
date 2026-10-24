@@ -33,7 +33,7 @@ class ParkingZoneBase(BaseModel):
 
 class ParkingSlotBase(BaseModel):
     sensor_id: str
-    status: str
+    status: Literal["VACANT", "OCCUPIED"]
     zone_id: int
 
 class Violations(BaseModel):
@@ -100,3 +100,8 @@ class ticket_base(ticket_app):
 class appeal_request(BaseModel):
     ticket_id:int
     reason:str
+
+class appeal_base(appeal_request):
+    appeals_id:int
+    appeal_date:datetime
+    status:Literal["pending","approved","rejected"]

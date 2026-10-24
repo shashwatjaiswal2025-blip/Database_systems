@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, De
 import asyncio
 from dataclasses import dataclass, field
 from sqlalchemy import select
-from schemas import UserBase, vehicleBase,Violations
-from database.db import get_session, User, Vehicle, Violation
+from schemas import UserBase, vehicleBase,Violations, violation_base
+from database.db import get_db as get_session, User, Vehicle, Violation
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix = "", tags=["Citizen & Vehicle Management "])
@@ -44,13 +44,13 @@ async def get_a_user( user_id:int,    Session: AsyncSession = Depends(get_sessio
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = f"User with id {user_id} not found")
     return user
 
-@router.get("/user/vehicles",response_model=list[Vehicle])
+@router.get("/user/vehicles",response_model=list[vehicleBase])
 async def get_user_vehicles(user:UserBase, Session: AsyncSession = Depends(get_session)):
     stmt = select(Vehicle).where(Vehicle.user_id == user.user_id)
     vehicles = await Session.scalars(stmt)
     return list(vehicles)
 
-@router.post("/vehicles",response_model=Vehicle)
+@router.post("/vehicles",response_model=vehicleBase)
 async def new_vehicle(vehicle: vehicleBase ,Session: AsyncSession = Depends(get_session)):
     stmt = select(Vehicle).where(Vehicle.plate_no == vehicle.plate_no)
     if Session.scalars(stmt) is not None:
@@ -63,7 +63,8 @@ async def new_vehicle(vehicle: vehicleBase ,Session: AsyncSession = Depends(get_
     return new_vehicle
 
 
-@router.post("/vehicles/{plate_no}",response_model = Vehicle)
+
+@router.post("/vehicles/{plate_no}",response_model = vehicleBase)
 async def get_vehicle_info(plate_no:int, Session: AsyncSession = Depends(get_session)):
     stmt = select(Vehicle).where(Vehicle.plate_no == plate_no)
     vehicle = await Session.scalar(stmt)
@@ -72,7 +73,7 @@ async def get_vehicle_info(plate_no:int, Session: AsyncSession = Depends(get_ses
 
     return vehicle
 
-@router.get("/vehicles/{plate_no}/history",response_model = list[Violations])
+@router.get("/vehicles/{plate_no}/history",response_model = list[violation_base])
 async def get_vehicle_history(plate_no:str, Session: AsyncSession = Depends(get_session)):
     stmt = select(Vehicle).where(Vehicle.plate_no == plate_no)
     vehicle = await Session.scalar(stmt)

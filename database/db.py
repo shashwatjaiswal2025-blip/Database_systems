@@ -6,7 +6,7 @@ from typing import List, Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
-from sqlalchemy import DateTime, ForeignKey, Integer, MetaData, Numeric, String
+from sqlalchemy import DateTime, ForeignKey, ForeignKeyConstraint, Integer, MetaData, Numeric, String
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -75,7 +75,7 @@ class Vehicle(Base):
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"), nullable=False)
 
     owner: Mapped["User"] = relationship(back_populates="vehicles")
-    reservations: Mapped[List["Reservation"]] = relationship(back_populates="vehicle")
+    
     violations: Mapped[List["Violation"]] = relationship(
         back_populates="vehicle", cascade="all, delete-orphan"
     )
@@ -108,16 +108,16 @@ class ParkingSlot(Base):
 
 class Reservation(Base):
     __tablename__ = "reservations"
+    __table_args__ = (ForeignKeyConstraint(["slot_id","zone_id"], ["parking_slots.slot_id","parking_slots.zone_id"]),)
 
     res_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     total_cost: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"), nullable=False)
-    slot_id: Mapped[int] = mapped_column(ForeignKey("parking_slots.slot_id"), nullable=False)
-    zone_id: Mapped[int] = mapped_column(ForeignKey("parking_zones.zone_id"), nullable=False)
+    slot_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    zone_id: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    zone: Mapped["ParkingZone"] = relationship(back_populates="reservations")
     user: Mapped["User"] = relationship(back_populates="reservations")
     slot: Mapped["ParkingSlot"] = relationship(back_populates="reservations")
 
@@ -164,6 +164,7 @@ class Ticket(Base):
     )
 
     violation: Mapped["Violation"] = relationship(back_populates="ticket")
+    user: Mapped["User"] = relationship()
     appeals: Mapped[List["Appeal"]] = relationship(
         back_populates="ticket", cascade="all, delete-orphan"
     )
@@ -189,10 +190,6 @@ SessionLocal = async_sessionmaker(
     expire_on_commit=False,
 )
 
-async def get_db():
-    async with SessionLocal() as session:
-        yield session
-        
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
@@ -204,3 +201,4 @@ async def get_db():
     async with SessionLocal() as session:
         yield session
 
+app = FastAPI(lifespan=lifespan)
